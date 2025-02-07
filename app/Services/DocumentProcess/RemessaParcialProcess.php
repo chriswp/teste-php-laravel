@@ -2,10 +2,7 @@
 
 namespace App\Services\DocumentProcess;
 
-use App\Builders\DocumentBuilder;
 use App\Constants\Messages;
-use App\DTOs\DocumentDTO;
-use App\DTOs\ProcessedDocumentDTO;
 
 class RemessaParcialProcess implements DocumentProcessInterface
 {
