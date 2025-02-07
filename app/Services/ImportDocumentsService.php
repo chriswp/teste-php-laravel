@@ -4,13 +4,10 @@ namespace App\Services;
 
 use App\Builders\DocumentBuilder;
 use App\Constants\Messages;
-use App\DTOs\ArquivoJsonDTO;
-use App\DTOs\ProcessedDocumentDTO;
 use App\Jobs\ProcessDocumentJob;
-use App\Models\Document;
 use App\Repositories\DocumentRepository;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class ImportDocumentsService implements ImportFile
 {
@@ -24,22 +21,27 @@ class ImportDocumentsService implements ImportFile
     /**
      * @throws \Exception
      */
-    public function execute(string $filename): void
+    public function execute(UploadedFile $file): void
     {
-       $importData =  $this->readJsonFile($filename);
-       foreach ($importData->get() as $documento) {
-           ProcessDocumentJob::dispatch($documento->jsonSerialize());
-       }
+        try {
+            $importData = $this->readJsonFile($file);
+            foreach ($importData->get() as $documento) {
+                ProcessDocumentJob::dispatch($documento->jsonSerialize());
+            }
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage());
+        }
     }
 
-    private function readJsonFile(string $filename): DocumentBuilder
+    public function readJsonFile(UploadedFile $file)
     {
-        $storage = Storage::disk('data');
-        if (!$storage->exists($filename)) {
-            throw new \Exception(Messages::ARQUIVO_NAO_ENCONTRADO);
+        $jsonContent = file_get_contents($file->getRealPath());
+        $decodedJson = json_decode($jsonContent, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return back()->withErrors(['file' => 'O arquivo não é um JSON válido.']);
         }
-        $contents =  $storage->json($filename);
-        $builder = new DocumentBuilder($contents);
-        return $builder->fromArray($contents);
+        $builder = new DocumentBuilder($decodedJson);
+        return $builder->fromArray($decodedJson);
     }
 }

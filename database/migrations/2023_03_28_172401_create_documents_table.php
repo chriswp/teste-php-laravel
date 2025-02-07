@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('category_id');
+            $table->integer('exercicio');
             $table->string('title', 60);
             $table->text('contents');
 

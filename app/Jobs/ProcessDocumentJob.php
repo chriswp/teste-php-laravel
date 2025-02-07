@@ -32,6 +32,7 @@ class ProcessDocumentJob implements ShouldQueue
             $processor->validate($this->data);
 
             Document::create([
+                'exercicio' => $this->data['exercicio'],
                 'category_id' => $this->data['categoria_id'],
                 'title' => $this->data['titulo'],
                 'contents' => $this->data['conteudo']

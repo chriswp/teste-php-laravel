@@ -2,15 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Document;
+use App\Http\Requests\DocumentUploadRequest;
 use App\Services\ImportDocumentsService;
-use App\Validators\DocumentValidator;
-use Illuminate\Support\Facades\Storage;
-use Prettus\Repository\Contracts\RepositoryInterface;
-use Prettus\Validator\Contracts\ValidatorInterface;
-use App\Constants\Messages;
 
-class DocumentsController extends PainelController
+class DocumentsController extends Controller
 {
     protected ImportDocumentsService $importDocumentsService;
     public function __construct(ImportDocumentsService $importDocumentsService)
@@ -18,59 +13,21 @@ class DocumentsController extends PainelController
         $this->importDocumentsService = $importDocumentsService;
     }
 
-    public function readJsonFile()
+    public function import()
     {
-        $filename = '2023-03-28.json';
-        $this->importDocumentsService->execute($filename);
-        return 'agora foi campeao';
-    }
-    protected function repository(): RepositoryInterface
-    {
-       return app(Document::class);
+        return view('upload');
     }
 
-    protected function viewIndex(): string
+    public function upload(DocumentUploadRequest $request)
     {
-        return 'documents.index';
-    }
+        try {
+            $file = $request->file('file');
+            $this->importDocumentsService->execute($file);
+            session()->flash('success', 'Arquivo foi importado com sucesso!');
 
-    protected function variablesIndex(): array
-    {
-       return [];
-    }
-
-    protected function validator(): ValidatorInterface
-    {
-        return app(DocumentValidator::class);
-    }
-
-    protected function viewCreate(): string
-    {
-        return 'documents.create';
-    }
-
-    protected function variablesCreate(): array
-    {
-        return [];
-    }
-
-    protected function viewShow(): string
-    {
-        return 'documents.show';
-    }
-
-    protected function variablesShow(): array
-    {
-        return [];
-    }
-
-    protected function viewEdit(): string
-    {
-        return 'documents.edit';
-    }
-
-    protected function variablesEdit(): array
-    {
-        return [];
+        }catch (\Exception){
+            session()->flash('error', 'Houve uma falha a importar o arquivo');
+        }
+        return back();
     }
 }
