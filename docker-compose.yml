@@ -1,0 +1,51 @@
+version: "3.7"
+
+services:
+    ai-solution-app:
+        container_name: ai-solution-app
+        build:
+            context: .
+            dockerfile: Dockerfile-local
+        restart: unless-stopped
+        working_dir: /var/www/
+        volumes:
+            - ./:/var/www
+        networks:
+            - ai-solution-network
+        depends_on:
+            - ai-solution-db
+
+    ai-solution-nginx:
+        container_name: ai-solution-nginx
+        image: nginx:alpine
+        restart: unless-stopped
+        ports:
+            - ${PORT:-8080}:80
+        volumes:
+            - ./:/var/www
+            - ./docker/nginx-dev/:/etc/nginx/conf.d/
+        networks:
+            - ai-solution-network
+        depends_on:
+            - ai-solution-app
+
+    ai-solution-db:
+        container_name: ai-solution-db
+        image: postgres:12.1
+        restart: unless-stopped
+        tty: true
+        ports:
+            - ${DB_EXTERNAL_PORT}:5432
+        environment:
+            - POSTGRES_PASSWORD=${DB_PASSWORD}
+            - POSTGRES_USER=${DB_USERNAME}
+        volumes:
+            - ai-solution-db:/var/lib/postgresql/data
+        networks:
+            - ai-solution-network
+
+networks:
+    ai-solution-network:
+        driver: bridge
+volumes:
+    ai-solution-db: {}
